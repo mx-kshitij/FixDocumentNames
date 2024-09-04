@@ -62,7 +62,6 @@ namespace FixDocumentNames
             IModule module;
             IDocument documentToFix;
             string newDocumentName = "";
-            IDialogService dialogService;
 
             using (var transaction = _currentApp!.StartTransaction("create microflow function"))
             {
@@ -76,11 +75,7 @@ namespace FixDocumentNames
                         newDocumentName = documentToFix.Name.Replace(documentFixModel.searchKey, documentFixModel.replacementText);
                         try
                         {
-                            //using (var transaction = _currentApp!.StartTransaction("create microflow function"))
-                            //{
                             documentToFix.Name = newDocumentName;
-                            //transaction.Commit();
-                            //}
                         }
                         catch (Exception ex)
                         {
@@ -88,7 +83,14 @@ namespace FixDocumentNames
                         }
                     }
                 }
-                transaction.Commit();
+                try
+                {
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {
+                    _logService.Error("Could not rename document", ex);
+                }
             }
         }
     }
