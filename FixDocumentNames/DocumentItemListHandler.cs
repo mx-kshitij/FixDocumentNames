@@ -64,32 +64,32 @@ namespace FixDocumentNames
             string newDocumentName = "";
             IDialogService dialogService;
 
-            //using (var transaction = _currentApp!.StartTransaction("create microflow function"))
-            //{
-            for (int i = 0; i < documentFixModel.checkedItems.Count; i++)
+            using (var transaction = _currentApp!.StartTransaction("create microflow function"))
             {
-                curItem = documentFixModel.checkedItems[i];
-                if (curItem != null)
+                for (int i = 0; i < documentFixModel.checkedItems.Count; i++)
                 {
-                    module = _currentApp.Root.GetModules().ToList().Find(item => item.Name == curItem.module);
-                    documentToFix = module.GetDocuments().ToList().Find(doc => doc.Name == curItem.document);
-                    newDocumentName = documentToFix.Name.Replace(documentFixModel.searchKey, documentFixModel.replacementText);
-                    try
+                    curItem = documentFixModel.checkedItems[i];
+                    if (curItem != null)
                     {
-                        using (var transaction = _currentApp!.StartTransaction("create microflow function"))
+                        module = _currentApp.Root.GetModules().ToList().Find(item => item.Name == curItem.module);
+                        documentToFix = module.GetDocuments().ToList().Find(doc => doc.Name == curItem.document);
+                        newDocumentName = documentToFix.Name.Replace(documentFixModel.searchKey, documentFixModel.replacementText);
+                        try
                         {
+                            //using (var transaction = _currentApp!.StartTransaction("create microflow function"))
+                            //{
                             documentToFix.Name = newDocumentName;
-                            transaction.Commit();
+                            //transaction.Commit();
+                            //}
+                        }
+                        catch (Exception ex)
+                        {
+                            _logService.Error("Could not rename document", ex);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        _logService.Error("Could not rename document", ex);
-                    }
                 }
+                transaction.Commit();
             }
-            //transaction.Commit();
-            //}
         }
     }
 }
