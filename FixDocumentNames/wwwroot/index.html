@@ -1,0 +1,94 @@
+<html lang="en">
+
+<head>
+    <title>Fix Document names</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+        @tailwind base;
+        @tailwind components;
+        @tailwind utilities;
+
+        @layer base {
+            body {
+                @apply m-6;
+            }
+
+            h1 {
+                @apply text-2xl mt-6;
+                font-weight: bold;
+            }
+
+            h2 {
+                @apply text-xl mt-6;
+            }
+
+            input[type="checkbox"] + label {
+                @apply ml-2;
+            }
+
+
+            button {
+                background: #146ef2;
+                color: white;
+                padding: 2px 10px;
+                border-radius: 5px;
+                min-width: 50px;
+            }
+
+            #panelTitle {
+                margin-bottom: 20px;
+            }
+
+            input[type="text"] {
+                border: 1px solid slategray;
+                border-radius: 5px;
+                padding: 0 5px;
+            }
+
+            input[type="text"].dark {
+                background: slategray;
+                color: white;
+            }
+
+            .panel {
+                margin: 10px 0px;
+            }
+
+            label.dark {
+                color: white;
+            }
+
+            #documentList {
+                padding-top: 10px;
+            }
+        }
+    </style>
+    <script>
+
+    </script>
+</head>
+
+<body>
+    <div>
+        <h1 id="panelTitle">Fix document names</h1>
+        <div class="panel">
+            <label id="documentSearchKeyLabel" for="documentSearchKey">Search for documents</label>
+            <input id="documentSearchKey" type="text" placeholder="Search ..." />
+            <button id="searchButton">Search</button>
+        </div>
+        <div class="panel">
+            <div>
+                <label id="documentNewValueLabel" for="documentNewValue">Value to replace</label>
+                <input id="documentNewValue" type="text" placeholder="New value ..." />
+                <button id="fixButton">Fix</button>
+                <button id="clearButton">Clear</button>
+            </div>
+        </div>
+        <h2 id="documentListTitle">Document list</h2>
+        <div id="documentList"></div>
+
+    </div>
+    <script type="module" src="./main.js"></script>
+</body>
+
+</html>
