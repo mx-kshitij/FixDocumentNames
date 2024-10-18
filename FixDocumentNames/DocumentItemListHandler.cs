@@ -10,6 +10,7 @@ using Mendix.StudioPro.ExtensionsAPI.Services;
 using Mendix.StudioPro.ExtensionsAPI.Model.Projects;
 using Mendix.StudioPro.ExtensionsAPI.Model.Microflows;
 using Mendix.StudioPro.ExtensionsAPI.UI.Services;
+using Mendix.StudioPro.ExtensionsAPI.BackgroundJobs;
 
 namespace FixDocumentNames
 {
@@ -17,11 +18,15 @@ namespace FixDocumentNames
     {
         private readonly ILogService _logService;
         private readonly IModel _currentApp;
+        private readonly IBackgroundJobService _bgService;
+        private readonly IMessageBoxService _msgService;
 
-        public DocumentItemListHandler(IModel currentApp, ILogService logService)
+        public DocumentItemListHandler(IModel currentApp, ILogService logService, IBackgroundJobService bgService, IMessageBoxService msgService)
         {
             _logService = logService;
             _currentApp = currentApp;
+            _bgService = bgService;
+            _msgService = msgService;
         }
 
         public List<DocumentItemModel> LoadDocumentList(string searchKey)
@@ -61,37 +66,57 @@ namespace FixDocumentNames
             CheckedItem curItem;
             IModule module;
             IDocument documentToFix;
+            string documentsFixFailed = "";
             string newDocumentName = "";
 
-            using (var transaction = _currentApp!.StartTransaction("create microflow function"))
+            BackgroundJob bgJob = new BackgroundJob("Fix documents");
+            bgJob.AddStep("Fix documents", "Changing document names", () =>
             {
-                for (int i = 0; i < documentFixModel.checkedItems.Count; i++)
+                using (var transaction = _currentApp!.StartTransaction("create microflow function"))
                 {
-                    curItem = documentFixModel.checkedItems[i];
-                    if (curItem != null)
+                    for (int i = 0; i < documentFixModel.checkedItems.Count; i++)
                     {
-                        module = _currentApp.Root.GetModules().ToList().Find(item => item.Name == curItem.module);
-                        documentToFix = module.GetDocuments().ToList().Find(doc => doc.Name == curItem.document);
-                        newDocumentName = documentToFix.Name.Replace(documentFixModel.searchKey, documentFixModel.replacementText);
-                        try
+                        curItem = documentFixModel.checkedItems[i];
+                        if (curItem != null)
                         {
-                            documentToFix.Name = newDocumentName;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logService.Error("Could not rename document", ex);
+                            module = _currentApp.Root.GetModules().ToList().Find(item => item.Name == curItem.module);
+                            documentToFix = module.GetDocuments().ToList().Find(doc => doc.Name == curItem.document);
+                            newDocumentName = documentToFix.Name.Replace(documentFixModel.searchKey, documentFixModel.replacementText);
+                            try
+                            {
+                                documentToFix.Name = newDocumentName;
+                            }
+                            catch (Exception ex)
+                            {
+                                _logService.Error("Could not rename document", ex);
+                                if(documentsFixFailed == "")
+                                {
+                                    documentsFixFailed = documentToFix.Name;
+                                }
+                                else
+                                {
+                                    documentsFixFailed = documentsFixFailed + ", " + documentToFix.Name;
+                                }
+                            }
                         }
                     }
+                    try
+                    {
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logService.Error("Could not rename document", ex);
+                    }
                 }
-                try
+                if(documentsFixFailed != "")
                 {
-                    transaction.Commit();
+                    _msgService.ShowError("Failed to fix documents : " + documentsFixFailed);
                 }
-                catch (Exception ex)
-                {
-                    _logService.Error("Could not rename document", ex);
-                }
-            }
+                return true;
+            });
+            //IBackgroundJobService bgService;
+            _bgService.Run(bgJob);
         }
     }
 }

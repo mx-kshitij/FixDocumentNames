@@ -1,4 +1,6 @@
-﻿using Mendix.StudioPro.ExtensionsAPI.Services;
+﻿using Mendix.StudioPro.ExtensionsAPI.BackgroundJobs;
+using Mendix.StudioPro.ExtensionsAPI.Services;
+using Mendix.StudioPro.ExtensionsAPI.UI.Services;
 using Mendix.StudioPro.ExtensionsAPI.UI.WebServer;
 using System;
 using System.Collections.Generic;
@@ -17,12 +19,16 @@ namespace FixDocumentNames
     {
         private readonly IExtensionFileService _extensionFileService;
         private readonly ILogService _logService;
+        private readonly IBackgroundJobService _bgService;
+        private readonly IMessageBoxService _msgService;
 
         [ImportingConstructor]
-        public FixDocumentNamesWebServerExtension(IExtensionFileService extensionFileService, ILogService logService)
+        public FixDocumentNamesWebServerExtension(IExtensionFileService extensionFileService, ILogService logService, IBackgroundJobService bgService, IMessageBoxService msgService)
         {
             _extensionFileService = extensionFileService;
             _logService = logService;
+            _bgService = bgService;
+            _msgService = msgService;
         }
 
         public override void InitializeWebServer(IWebServer webServer)
@@ -56,7 +62,7 @@ namespace FixDocumentNames
 
             var searchKey = request.QueryString["searchKey"] ?? "";
 
-            var documentList = new DocumentItemListHandler(CurrentApp, _logService).LoadDocumentList(searchKey);
+            var documentList = new DocumentItemListHandler(CurrentApp, _logService, _bgService, _msgService).LoadDocumentList(searchKey);
             var jsonStream = new MemoryStream();
             await JsonSerializer.SerializeAsync(jsonStream, documentList, cancellationToken: ct);
 
@@ -95,7 +101,7 @@ namespace FixDocumentNames
             {
                 requestBody = reader.ReadToEnd();
                 var jsonStream = new MemoryStream();
-                await JsonSerializer.SerializeAsync(jsonStream, "", cancellationToken: ct);
+                await JsonSerializer.SerializeAsync(jsonStream, "Fixing documents", cancellationToken: ct);
 
                 response.SendJsonAndClose(jsonStream);
             }
@@ -103,14 +109,19 @@ namespace FixDocumentNames
             {
                 _logService.Error("Error parsing ", ex);
             }
-
-            new DocumentItemListHandler(CurrentApp, _logService).FixDocumentList(requestBody);
+            try
+            {
+                new DocumentItemListHandler(CurrentApp, _logService, _bgService, _msgService).FixDocumentList(requestBody);
+            }
+            catch(Exception ex)
+            {
+                _logService.Error("Failed to fix documents", ex);
+            }
+            
 
             body.Close();
             reader.Close();
 
-
-            
         }
     }
 }

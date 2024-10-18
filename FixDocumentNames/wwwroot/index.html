@@ -45,10 +45,10 @@
                 padding: 0 5px;
             }
 
-            input[type="text"].dark {
-                background: slategray;
-                color: white;
-            }
+                input[type="text"].dark {
+                    background: slategray;
+                    color: white;
+                }
 
             .panel {
                 margin: 10px 0px;
@@ -61,6 +61,15 @@
             #documentList {
                 padding-top: 10px;
             }
+
+            .selectButtons {
+                margin-top: 3px;
+                > button
+                    {
+                        background: grey;
+                    }
+
+             }
         }
     </style>
     <script>
@@ -85,6 +94,10 @@
             </div>
         </div>
         <h2 id="documentListTitle">Document list</h2>
+        <div class="selectButtons">
+            <button id="selectAllBtn">Select all</button>
+            <button id="deselectAllBtn">Deselect all</button>
+        </div>
         <div id="documentList"></div>
 
     </div>

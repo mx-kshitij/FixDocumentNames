@@ -35,6 +35,7 @@ async function refreshList() {
             let checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.id = `document-${documentItem.Id}`;
+            checkbox.classList.add('fix-document-checkbox-item') ;
 
             let label = document.createElement("label");
             label.id = 'label-' + checkbox.id;
@@ -106,9 +107,7 @@ async function fixDocumentItems() {
             });
 
             const response = await fetch(request);
-            let responseBody = await response.json(); s
-            alert(responseBody);
-            refreshList();
+            let responseBody = await response.json();
         }
         else {
             alert("At least 1 item needs to be selected!")
@@ -128,9 +127,25 @@ async function clearEverything() {
     documentListDiv.replaceChildren();
 }
 
+async function selectAll() {
+    let documentList = document.getElementsByClassName('fix-document-checkbox-item');
+    let curDoc;
+    for (let curDoc of documentList) {
+        curDoc.checked = true;
+    }
+}
+
+async function deselectedAll() {
+    let documentList = document.getElementsByClassName('fix-document-checkbox-item');
+    for (let curDoc of documentList) {
+        curDoc.checked = false;
+    }
+}
+
 document.getElementById("searchButton").addEventListener("click", refreshList);
 document.getElementById("clearButton").addEventListener("click", clearEverything);
 document.getElementById("fixButton").addEventListener("click", fixDocumentItems);
+document.getElementById("selectAllBtn").addEventListener("click", selectAll);
+document.getElementById("deselectAllBtn").addEventListener("click", deselectedAll);
 
 await loadTheme();
-//await refreshToDos();
