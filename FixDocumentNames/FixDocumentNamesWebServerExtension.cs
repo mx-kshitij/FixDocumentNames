@@ -2,6 +2,7 @@
 using Mendix.StudioPro.ExtensionsAPI.Services;
 using Mendix.StudioPro.ExtensionsAPI.UI.Services;
 using Mendix.StudioPro.ExtensionsAPI.UI.WebServer;
+using Mendix.StudioPro.ExtensionsAPI.UI.WebView;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace FixDocumentNames
 {
+
     [Export(typeof(WebServerExtension))]
 
     public class FixDocumentNamesWebServerExtension : WebServerExtension
@@ -61,8 +63,9 @@ namespace FixDocumentNames
             }
 
             var searchKey = request.QueryString["searchKey"] ?? "";
+            var documentAmount = request.QueryString["amount"] ?? "10";
 
-            var documentList = new DocumentItemListHandler(CurrentApp, _logService, _bgService, _msgService).LoadDocumentList(searchKey);
+            var documentList = new DocumentItemListHandler(CurrentApp, _logService, _bgService, _msgService).LoadDocumentList(searchKey, int.Parse(documentAmount));
             var jsonStream = new MemoryStream();
             await JsonSerializer.SerializeAsync(jsonStream, documentList, cancellationToken: ct);
 
@@ -121,7 +124,6 @@ namespace FixDocumentNames
 
             body.Close();
             reader.Close();
-
         }
     }
 }

@@ -29,27 +29,33 @@ namespace FixDocumentNames
             _msgService = msgService;
         }
 
-        public List<DocumentItemModel> LoadDocumentList(string searchKey)
+        public List<DocumentItemModel> LoadDocumentList(string searchKey, int amount)
         {
             List<DocumentItemModel> documentItemList = [];
             if (searchKey != null)
             {
                 IReadOnlyList<IModule> moduleList;
+                int count = 0;
                 try
                 {
-                    moduleList = _currentApp.Root.GetModules();
-                    foreach (var module in moduleList)
+                    if(count < amount)
                     {
-                        module.GetDocuments().ToList()
-                            .ForEach(document =>
-                            {
-                                if (document.Name.Contains(searchKey))
+                        moduleList = _currentApp.Root.GetModules();
+                        foreach (var module in moduleList)
+                        {
+                            module.GetDocuments().ToList()
+                                .ForEach(document =>
                                 {
-                                    DocumentItemModel documentItem = new(module.Name, document.Name, "");
-                                    documentItemList.Add(documentItem);
-                                }
-                            });
+                                    if (document.Name.Contains(searchKey) && count < amount)
+                                    {
+                                        DocumentItemModel documentItem = new(module.Name, document.Name, "");
+                                        documentItemList.Add(documentItem);
+                                        count++;
+                                    }
+                                });
+                        }
                     }
+                    
 
                 }
                 catch (Exception ex)

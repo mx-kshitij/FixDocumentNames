@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Mendix.StudioPro.ExtensionsAPI.Model;
 using Mendix.StudioPro.ExtensionsAPI.Services;
 using Mendix.StudioPro.ExtensionsAPI.UI.DockablePane;
+using Mendix.StudioPro.ExtensionsAPI.UI.Services;
 using Mendix.StudioPro.ExtensionsAPI.UI.WebView;
 
 namespace FixDocumentNames
@@ -16,15 +17,20 @@ namespace FixDocumentNames
         private readonly Uri _baseUri;
         private readonly Func<IModel?> _getCurrentApp;
         private readonly ILogService _logService;
+        private readonly IBackgroundJobService bgService;
+        private readonly IMessageBoxService msgService;
 
-        public FixDocumentNamesDockablePaneViewModel(Uri baseUri, Func<IModel?> getCurrentApp, ILogService logService)
+        public FixDocumentNamesDockablePaneViewModel(Uri baseUri, Func<IModel?> getCurrentApp, ILogService logService, IBackgroundJobService bgService, IMessageBoxService msgService)
         {
             _baseUri = baseUri;
             _getCurrentApp = getCurrentApp;
             _logService = logService;
+            this.bgService = bgService;
+            this.msgService = msgService;
         }
         public override void InitWebView(IWebView webView)
         {
+
             webView.Address = new Uri(_baseUri, "index");
 
             webView.MessageReceived += (_, args) =>
@@ -32,20 +38,19 @@ namespace FixDocumentNames
                 var currentApp = _getCurrentApp();
                 if (currentApp == null) return;
 
-                if (args.Message == "setDocumentName")
+                if (args.Message == "FixDocuments") 
                 {
-                    var currentDocumentName = args.Data["currentDocumentName"]?.GetValue<string>();
-                    var newDocumentName = args.Data["newDocumentName"]?.GetValue<string>();
-                    //ChangeDocumentName(currentApp, currentDocumentName, newDocumentName);
-                    webView.PostMessage("RefreshList");
+                    new DocumentItemListHandler(currentApp, _logService, bgService, msgService).FixDocumentList(args.Data.ToJsonString());
+                    try
+                    {
+                        webView.Address = new Uri(_baseUri, "index?searchKey=" + args.Data["searchKey"]);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logService.Error("Error occurred", ex);
+                    }
                 }
-
             };
         }
-
-        //private void ChangeDocumentName(IModel currentApp, string currentName, string newName)
-        //{
-        //    DocumentHandler
-        //}
     }
 }

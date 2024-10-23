@@ -1,11 +1,13 @@
 function postMessage(message, data) {
     window.chrome.webview.postMessage({ message, data });
+    window.postMessage({ message, data });
 }
 
 // Register message handler.
 window.chrome.webview.addEventListener("message", handleMessage);
+window.addEventListener("message", handleMessage);
 // Indicate that you are ready to receive messages.
-postMessage("MessageListenerRegistered");
+//postMessage("MessageListenerRegistered");
 
 async function handleMessage(event) {
     const { message, data } = event.data;
@@ -16,8 +18,9 @@ async function handleMessage(event) {
 
 async function refreshList() {
     let inputText = document.getElementById("documentSearchKey")?.value;
+    let documentAmount = document.getElementById("documentAmount")?.value;
     if (inputText && inputText.trim() != "") {
-        let documentsResponse = await fetch(`./documents?searchKey=${inputText}`);
+        let documentsResponse = await fetch(`./documents?searchKey=${inputText}&amount=${documentAmount}`);
         let documents = await documentsResponse.json();
 
         let documentListDiv = document.getElementById("documentList");
@@ -78,7 +81,6 @@ async function checkIfDarkMode() {
 }
 
 async function fixDocumentItems() {
-
     let inputText = document.getElementById("documentSearchKey").value;
     let newText = document.getElementById("documentNewValue").value;
 
@@ -101,13 +103,14 @@ async function fixDocumentItems() {
         if (checkedItems.length > 0) {
             let requestBody = { searchKey: inputText, replacementText: newText, checkedItems: checkedItems }
 
-            const request = new Request("./fixDocuments", {
-                method: "POST",
-                body: JSON.stringify(requestBody),
-            });
+            //const request = new Request("./fixDocuments", {
+            //    method: "POST",
+            //    body: JSON.stringify(requestBody),
+            //});
 
-            const response = await fetch(request);
-            let responseBody = await response.json();
+            //const response = await fetch(request);
+            //let responseBody = await response.json();
+            postMessage("FixDocuments", requestBody);
         }
         else {
             alert("At least 1 item needs to be selected!")
@@ -142,6 +145,16 @@ async function deselectedAll() {
     }
 }
 
+async function loadListFromSearchKey() {
+    const params = new URLSearchParams(window.location.search);
+    const param = params.get("searchKey");
+    if (param) {
+        const searchInput = document.getElementById("documentSearchKey");
+        searchInput.value = param;
+        await refreshList();
+    }
+}
+
 document.getElementById("searchButton").addEventListener("click", refreshList);
 document.getElementById("clearButton").addEventListener("click", clearEverything);
 document.getElementById("fixButton").addEventListener("click", fixDocumentItems);
@@ -149,3 +162,5 @@ document.getElementById("selectAllBtn").addEventListener("click", selectAll);
 document.getElementById("deselectAllBtn").addEventListener("click", deselectedAll);
 
 await loadTheme();
+
+loadListFromSearchKey();
