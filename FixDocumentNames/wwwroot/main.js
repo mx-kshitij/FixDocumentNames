@@ -1,13 +1,26 @@
 function postMessage(message, data) {
-    window.chrome.webview.postMessage({ message, data });
-    window.postMessage({ message, data });
+    //window.chrome.webview.postMessage({ message, data });
+    //window.postMessage({ message, data });
+    if (window.chrome?.webview) {
+        window.chrome.webview.postMessage({ message, data })
+    } else if (window.webkit?.messageHandlers.studioPro) {
+        window.webkit.messageHandlers.studioPro.postMessage(JSON.stringify({ message, data }))
+    }
 }
 
 // Register message handler.
-window.chrome.webview.addEventListener("message", handleMessage);
-window.addEventListener("message", handleMessage);
-// Indicate that you are ready to receive messages.
-//postMessage("MessageListenerRegistered");
+window.chrome?.webview.addEventListener("message", handleMessage);
+//window.addEventListener("message", handleMessage);
+window.WKPostMessage = json => {
+    // To avoid issues serializing data, we JSONify the data when posting.
+    const wkMessage = JSON.parse(json);
+    const message = wkMessage["message"];
+    const data = wkMessage["data"];
+
+    if (typeof message === "string") {
+        void handleMessage({ message, data });
+    }
+};
 
 async function handleMessage(event) {
     const { message, data } = event.data;
@@ -20,7 +33,7 @@ async function refreshList() {
     let inputText = document.getElementById("documentSearchKey")?.value;
     let documentAmount = document.getElementById("documentAmount")?.value;
     if (inputText && inputText.trim() != "") {
-        let documentsResponse = await fetch(`./documents?searchKey=${inputText}&amount=${documentAmount}`);
+        let documentsResponse = await fetch("./documents?searchKey="+inputText+"&amount="+documentAmount);
         let documents = await documentsResponse.json();
 
         let documentListDiv = document.getElementById("documentList");
@@ -37,7 +50,7 @@ async function refreshList() {
 
             let checkbox = document.createElement("input");
             checkbox.type = "checkbox";
-            checkbox.id = `document-${documentItem.Id}`;
+            checkbox.id = "document-"+documentItem.Id;
             checkbox.classList.add('fix-document-checkbox-item') ;
 
             let label = document.createElement("label");
