@@ -61,7 +61,13 @@ async function refreshList() {
                 label.classList.add("dark");
             }
 
-            itemDiv.replaceChildren(checkbox, label);
+            let button = document.createElement("button");
+            //button.click = openDocument;
+            button.innerText = "Open document"
+            button.addEventListener("click", openDocument);
+            button.style.marginLeft = "10px";
+
+            itemDiv.replaceChildren(checkbox, label, button);
 
             documentItems.push(itemDiv);
         }
@@ -166,6 +172,11 @@ async function loadListFromSearchKey() {
         searchInput.value = param;
         await refreshList();
     }
+}
+
+async function openDocument(event) {
+    var documentName = event.target.parentElement.children[1].innerHTML
+    postMessage("OpenDocument", { documentName: documentName });
 }
 
 document.getElementById("searchButton").addEventListener("click", refreshList);
